@@ -63,10 +63,7 @@
     let map;
     let markers = [];
 
-    let userLat = 53.452812;
-    let userLng = 9.858672;
-
-    function setLang(newLang) {
+function setLang(newLang) {
       lang = newLang;
       document.getElementById('title').textContent = translations[lang].title.replace('(km)', `(${document.getElementById('radius').value} km)`);
       document.getElementById('status').textContent = translations[lang].loading;
@@ -154,6 +151,41 @@
 <div id="location-info" style="color:#f97316;padding:8px;">📍 Standort wird ermittelt...</div>
 
 
+
+
+<div id="location-info" style="color:#f97316;padding:8px;">📍 Standort wird ermittelt...</div>
+
+<script>
+const userIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+});
+
+navigator.geolocation.getCurrentPosition(
+  pos => {
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    console.log("📍 Standort erfolgreich:", userLat, userLng);
+    document.getElementById("location-info").innerText = "";
+
+    map.setView([userLat, userLng], 14);
+    L.marker([userLat, userLng], { icon: userIcon })
+     .addTo(map)
+     .bindPopup("📍 Du bist hier")
+     .openPopup();
+
+    loadStations();
+  },
+  err => {
+    console.error("🚫 Standortfehler:", err);
+    document.getElementById("location-info").innerText =
+      "📍 Standort konnte nicht ermittelt werden: " + err.message;
+    loadStations(); // Fallback
+  }
+);
+</script>
 
 
 <div id="location-info" style="color:#f97316;padding:8px;">📍 Standort wird ermittelt...</div>
