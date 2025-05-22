@@ -148,42 +148,19 @@
   </script>
 <div id="location-info" style="color:#f87171;padding:8px;">📍 Standort wird ermittelt...</div>
 
-<script>
-let userLat = 53.452812;
-let userLng = 9.858672;
 
-const userIcon = L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32]
-});
 
-navigator.geolocation.getCurrentPosition(pos => {
-    userLat = pos.coords.latitude;
-    userLng = pos.coords.longitude;
-    document.getElementById("location-info").innerText = "";
 
-    map.setView([userLat, userLng], 13);
-    L.marker([userLat, userLng], { icon: userIcon })
-     .addTo(map)
-     .bindPopup("📍 Du bist hier")
-     .openPopup();
+<div id="location-info" style="color:#f97316;padding:8px;">📍 Standort wird ermittelt...</div>
 
-    loadStations();
-}, err => {
-    console.warn("Standortfehler:", err);
-    document.getElementById("location-info").innerText = "📍 Standort konnte nicht ermittelt werden.";
-    loadStations(); // Fallback auf Hamburg
-});
-</script>
+
 
 
 <div id="location-info" style="color:#f97316;padding:8px;">📍 Standort wird ermittelt...</div>
 
 <script>
-let userLat = 53.452812;
-let userLng = 9.858672;
+var userLat = 53.452812;
+var userLng = 9.858672;
 
 const userIcon = L.icon({
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
@@ -192,9 +169,11 @@ const userIcon = L.icon({
     popupAnchor: [0, -32]
 });
 
-navigator.geolocation.getCurrentPosition(pos => {
+navigator.geolocation.getCurrentPosition(
+  pos => {
     userLat = pos.coords.latitude;
     userLng = pos.coords.longitude;
+    console.log("📍 Standort erfolgreich:", userLat, userLng);
     document.getElementById("location-info").innerText = "";
 
     map.setView([userLat, userLng], 14);
@@ -204,11 +183,14 @@ navigator.geolocation.getCurrentPosition(pos => {
      .openPopup();
 
     loadStations();
-}, err => {
-    console.warn("Standortfehler:", err);
-    document.getElementById("location-info").innerText = "📍 Standort konnte nicht ermittelt werden.";
+  },
+  err => {
+    console.error("🚫 Standortfehler:", err);
+    document.getElementById("location-info").innerText =
+      "📍 Standort konnte nicht ermittelt werden: " + err.message;
     loadStations(); // Fallback
-});
+  }
+);
 </script>
 
 </body>
