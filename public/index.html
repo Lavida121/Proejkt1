@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tankstellenpreise</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-200 font-sans">
+  <div class="max-w-4xl mx-auto px-4 py-6">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <h1 class="text-2xl sm:text-3xl font-bold">⛽ <span id="title">Tankstellen im Umkreis (5 km)</span></h1>
+      <div class="flex flex-wrap gap-2 items-center">
+        <select id="fuelType" class="rounded p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <option value="e5">Super E5</option>
+          <option value="e10">Super E10</option>
+          <option value="diesel">Diesel</option>
+          <option value="all">Alle</option>
+        </select>
+        <div class="flex items-center gap-2">
+          <input id="radius" type="range" min="1" max="20" value="5" class="w-32" />
+          <span id="radiusValue">5 km</span>
+        </div>
+        <div class="flex gap-1 text-lg">
+          <button onclick="setLang('de')">🇩🇪</button>
+          <button onclick="setLang('tr')">🇹🇷</button>
+          <button onclick="setLang('en')">🇬🇧</button>
+        </div>
+      </div>
+    </div>
+    <div class="text-sm mb-2" id="status">📍 Standort wird ermittelt...</div>
+    <div id="map" class="w-full h-72 rounded-xl shadow-md mb-6"></div>
+    <div id="liste" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  </div>
+  <script>
+    const translations = {
+      de: {
+        title: "Tankstellen im Umkreis (km)",
+        loading: "📍 Standort wird ermittelt...",
+        error: "Fehler beim Abrufen der Tankstellen.",
+        price: "Preis",
+        distance: "Entfernung"
+      },
+      tr: {
+        title: "Yakındaki benzin istasyonları (km)",
+        loading: "📍 Konum alınıyor...",
+        error: "Benzin istasyonları alınamadı.",
+        price: "Fiyat",
+        distance: "Mesafe"
+      },
+      en: {
+        title: "Fuel stations nearby (km)",
+        loading: "📍 Getting location...",
+        error: "Could not load stations.",
+        price: "Price",
+        distance: "Distance"
+      }
+    };
+
+    let lang = 'de';
+    let map;
+    let markers = [];
+
+    let userLat = 53.452812;
+    let userLng = 9.858672;
+
+    function setLang(newLang) {
+      lang = newLang;
+      document.getElementById('title').textContent = translations[lang].title.replace('(km)', `(${document.getElementById('radius').value} km)`);
+      document.getElementById('status').textContent = translations[lang].loading;
+      loadStations();
+    }
+
+    function updateRadiusLabel() {
+      const radius = document.getElementById('radius').value;
+      document.getElementById('radiusValue').textContent = radius + ' km';
+      document.getElementById('title').textContent = translations[lang].title.replace('(km)', `(${radius} km)`);
+    }
+
+    async function loadStations() {
+      const status = document.getElementById('status');
+      const list = document.getElementById('liste');
+      const radius = document.getElementById('radius').value;
+      const type = document.getElementById('fuelType').value;
+
+      status.textContent = translations[lang].loading;
+      list.innerHTML = '';
+      markers.forEach(m => m.remove());
+      markers = [];
+
+      try {
+        const res = await fetch(`/tankstellen?lat=${userLat}&lng=${userLng}&rad=${radius}&type=${type}`);
+        const data = await res.json();
+
+        if (!data.ok) throw new Error(data.message);
+
+        data.stations.forEach(station => {
+          const div = document.createElement('div');
+          div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow";
+          div.innerHTML = `
+            <div class="font-semibold">${station.name}</div>
+            <div class="text-sm">${station.street}, ${station.place}</div>
+            <div class="mt-1 text-sm">${translations[lang].price}: <strong>${station.price ? station.price.toFixed(2) + ' €' : 'n/a'}</strong></div>
+            <div class="text-sm">${translations[lang].distance}: ${station.dist.toFixed(2)} km</div>
+          `;
+          list.appendChild(div);
+
+          if (station.lat && station.lng) {
+            const marker = L.marker([station.lat, station.lng]).addTo(map).bindPopup(
+              `<strong>${station.name}</strong><br>${station.price ? station.price.toFixed(2) + ' €' : 'n/a'}`
+            );
+            markers.push(marker);
+          }
+        });
+        status.textContent = '';
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ " + translations[lang].error;
+      }
+    }
+
+    function initMap() {
+      map = L.map('map').setView([userLat, userLng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    document.getElementById('radius').addEventListener('input', () => {
+      updateRadiusLabel();
+      loadStations();
+    });
+    document.getElementById('fuelType').addEventListener('change', loadStations);
+
+    navigator.geolocation.getCurrentPosition(pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      initMap();
+      setLang('de');
+    }, err => {
+      initMap();
+      setLang('de');
+    });
+
+    setInterval(loadStations, 60000);
+  </script>
+</body>
+</html>
