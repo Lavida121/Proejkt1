@@ -35,6 +35,8 @@
     <div id="liste" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
   </div>
   <script>
+let userLat = 53.452812;
+let userLng = 9.858672;
     const translations = {
       de: {
         title: "Tankstellen im Umkreis (km)",
@@ -191,9 +193,6 @@ navigator.geolocation.getCurrentPosition(
 <div id="location-info" style="color:#f97316;padding:8px;">📍 Standort wird ermittelt...</div>
 
 <script>
-var userLat = 53.452812;
-var userLng = 9.858672;
-
 const userIcon = L.icon({
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
     iconSize: [32, 32],
